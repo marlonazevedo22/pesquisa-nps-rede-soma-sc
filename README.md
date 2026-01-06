@@ -51,7 +51,14 @@ Uma aplicação web fullstack para coletar feedback de clientes da Rede Soma Av.
 - Dashboard responsivo com animações e tooltips escuros.
 - Build otimizado com Next.js.
 
-## Deploy
+## Deploy no Vercel
 
-- Pronto para deploy no Vercel, Netlify ou similar.
-- Configure as variáveis de ambiente no provedor de deploy.
+1. **Conecte o repositório GitHub** no [Vercel](https://vercel.com).
+2. **Configure variáveis de ambiente** no dashboard do Vercel:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `ADMIN_PASSWORD` (senha para acessar /admin)
+3. **Deploy automático**: O Vercel fará o build e deploy automaticamente.
+4. **Acesso ao Admin**: Use `?password=sua_senha` na URL ou header `Authorization: Bearer sua_senha` para /admin.
+
+**Nota**: O middleware protege /admin com senha simples. Para produção, considere autenticação mais robusta.
