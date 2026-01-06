@@ -4,17 +4,25 @@ Uma aplicação web fullstack para coletar feedback de clientes da Rede Soma Av.
 
 ## Funcionalidades
 
-- **Home**: Tela de boas-vindas com pergunta NPS (0-10).
-- **Questionário**: 5 perguntas de satisfação (1-5) + campos opcionais para nome e telefone.
-- **Obrigado**: Página final com links para Google e Instagram.
-- **Dashboard Admin**: KPIs, gráficos e tabela de respostas (rota /admin).
+- **Home**: Tela de boas-vindas com pergunta NPS (0-10) e botões intuitivos.
+- **Questionário**: 5 perguntas de satisfação com ratings emoji (1-5), formatação incremental de telefone e campos opcionais para nome e telefone.
+- **Obrigado**: Página final com ícones maiores e links para Google e Instagram.
+- **Dashboard Admin (/admin)**: 
+  - Tema escuro premium com tooltips informativos.
+  - Cards de métricas: Total Acessos, Total Respostas, NPS Geral, Médias das Perguntas.
+  - Gráficos: Respostas por dia (barras) e Distribuição NPS agrupada (0-3: Ruim, 4-7: Bom, 8-10: Excelente) com legenda e labels de porcentagem.
+  - Tabela completa de respostas com filtros e exportação visual.
 
 ## Stack
 
-- Next.js (App Router)
+- Next.js 16.1.1 (App Router)
+- React 19
 - Tailwind CSS
 - TypeScript
-- Supabase (banco de dados e autenticação)
+- Supabase (banco de dados)
+- Recharts (gráficos)
+- react-tooltip (tooltips interativos)
+- react-icons (ícones)
 
 ## Configuração
 
@@ -32,11 +40,18 @@ Uma aplicação web fullstack para coletar feedback de clientes da Rede Soma Av.
 
 ## Esquema do Banco
 
-- `acessos`: Registra acessos únicos.
-- `respostas`: Armazena as respostas do questionário.
+- `acessos`: Registra acessos únicos (IP-based).
+- `respostas`: Armazena NPS, ratings Q1-Q5, nome, telefone e duração.
 
 ## Desenvolvimento
 
-- Tracking de visitantes únicos via localStorage.
-- Time-to-complete registrado em milissegundos.
-- Dashboard com gráficos usando Recharts.
+- Tracking de visitantes únicos via localStorage e IP.
+- Formatação de telefone incremental (XX) XXXXX-XXXX.
+- Ratings com emojis para melhor UX.
+- Dashboard responsivo com animações e tooltips escuros.
+- Build otimizado com Next.js.
+
+## Deploy
+
+- Pronto para deploy no Vercel, Netlify ou similar.
+- Configure as variáveis de ambiente no provedor de deploy.
