@@ -48,6 +48,7 @@ export default function Questionario() {
   const handleSubmit = async () => {
     const npsScore = parseInt(sessionStorage.getItem('npsScore') || '0')
     const startTime = parseInt(sessionStorage.getItem('startTime') || '0')
+    const referralSource = sessionStorage.getItem('referralSource');
     const duration = Date.now() - startTime
 
     await supabase.from('respostas').insert({
@@ -59,6 +60,7 @@ export default function Questionario() {
       q5: answers[4],
       nome: nome || null,
       telefone: telefone || null,
+      origem: referralSource || null,
       duration,
     })
 

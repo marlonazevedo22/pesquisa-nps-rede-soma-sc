@@ -9,14 +9,22 @@ export default function Home() {
   const router = useRouter()
 
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const source = urlParams.get('utm_source');
+
     // Tracking de acesso único
     const visitorId = localStorage.getItem('visitorId') || crypto.randomUUID()
     localStorage.setItem('visitorId', visitorId)
+
+    if (source) {
+      sessionStorage.setItem('referralSource', source);
+    }
 
     // Registrar acesso
     supabase.from('acessos').insert({
       ip_hash: visitorId, // usando visitorId como hash
       user_agent: navigator.userAgent,
+      source: source,
     }).then(() => {
       console.log('Acesso registrado')
     })

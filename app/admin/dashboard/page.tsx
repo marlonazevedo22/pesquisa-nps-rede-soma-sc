@@ -1,12 +1,12 @@
-
 'use client'
 
 import { supabase } from '../../../lib/supabase'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 import { useEffect, useState } from 'react'
 import { Tooltip as ReactTooltip } from 'react-tooltip'
-import { FiHelpCircle } from 'react-icons/fi'
+import { FiHelpCircle, FiPlus } from 'react-icons/fi'
 
+// ... existing interfaces
 interface Media {
   question: string;
   avg: number;
@@ -34,9 +34,19 @@ interface Resposta {
   q5: number;
   nome?: string;
   telefone?: string;
+  origem?: string;
   duration: number;
 }
-
+interface AgradecimentoCliques {
+    link_type: string;
+    count: number;
+}
+interface DailyMetric {
+    date: string;
+    conversations_started: number;
+    evaluation_links_sent: number;
+    finished_evaluation: number;
+}
 interface DashboardData {
   totalAcessos: number;
   totalRespostas: number;
@@ -45,31 +55,37 @@ interface DashboardData {
   chartDataDia: ChartDataDia[];
   chartDataNotas: ChartDataNota[];
   respostas: Resposta[];
+  agradecimentoCliques: AgradecimentoCliques[];
+  dailyMetrics: DailyMetric[];
+  avaliacoesIniciadas: number;
 }
 
 async function getData(): Promise<DashboardData> {
   const { data: acessos } = await supabase.from('acessos').select('*')
   const { data: respostas } = await supabase.from('respostas').select('*')
+  const { data: dailyMetricsData } = await supabase.from('daily_metrics').select('*').order('date', { ascending: true });
+  const { data: agradecimentoCliquesData } = await supabase.from('agradecimento_cliques').select('*');
 
   const totalAcessos = acessos?.length || 0
   const totalRespostas = respostas?.length || 0
-  const npsGeral = respostas ? respostas.reduce((sum, r) => sum + r.nps_score, 0) / totalRespostas : 0
+  const npsGeral = respostas && totalRespostas > 0 ? respostas.reduce((sum, r) => sum + r.nps_score, 0) / totalRespostas : 0
 
-  const medias = [1,2,3,4,5].map(i => ({
-    question: `Q${i}`,
-    avg: respostas ? respostas.reduce((sum, r) => sum + r[`q${i}`], 0) / totalRespostas : 0
-  }))
+  const medias = [1,2,3,4,5].map(i => {
+    const questionKey = `q${i}` as keyof Resposta;
+    return {
+        question: `Q${i}`,
+        avg: (respostas && totalRespostas > 0) ? respostas.reduce((sum, r) => sum + (r[questionKey] as number), 0) / totalRespostas : 0
+    };
+  });
 
-  // Respostas por dia
   const respostasPorDia = respostas?.reduce((acc, r) => {
-    const date = new Date(r.created_at).toDateString()
+    const date = new Date(r.created_at).toLocaleDateString()
     acc[date] = (acc[date] || 0) + 1
     return acc
   }, {} as Record<string, number>) || {}
 
   const chartDataDia = Object.entries(respostasPorDia).map(([date, count]) => ({ date, count: count as number }))
 
-  // Distribuição de notas
   const distribuicaoNotas = respostas?.reduce((acc, r) => {
     if (r.nps_score <= 3) acc['0-3'] = (acc['0-3'] || 0) + 1
     else if (r.nps_score <= 7) acc['4-7'] = (acc['4-7'] || 0) + 1
@@ -84,6 +100,16 @@ async function getData(): Promise<DashboardData> {
     const percentage = totalRespostas > 0 ? ((count as number) / totalRespostas) * 100 : 0
     return { nota: range, count: count as number, fill, percentage }
   })
+  
+    const agradecimentoCliquesCounts = (agradecimentoCliquesData || []).reduce((acc, r) => {
+        acc[r.link_type] = (acc[r.link_type] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const agradecimentoCliques = Object.entries(agradecimentoCliquesCounts).map(([link_type, count]) => ({
+        link_type,
+        count
+    }));
 
   return {
     totalAcessos,
@@ -92,15 +118,81 @@ async function getData(): Promise<DashboardData> {
     medias,
     chartDataDia,
     chartDataNotas,
-    respostas: respostas || []
+    respostas: respostas || [],
+    agradecimentoCliques,
+    dailyMetrics: dailyMetricsData || [],
+    avaliacoesIniciadas: totalRespostas,
   }
 }
+
+const DailyMetricsForm = ({ onMetricAdded }: { onMetricAdded: () => void }) => {
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [conversations, setConversations] = useState(0);
+    const [linksSent, setLinksSent] = useState(0);
+    const [finishedEvaluation, setFinishedEvaluation] = useState(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
+        const metric = {
+            date,
+            conversations_started: conversations,
+            evaluation_links_sent: linksSent,
+            finished_evaluation: finishedEvaluation,
+        };
+
+        const { error } = await supabase.from('daily_metrics').upsert(metric, { onConflict: 'date' });
+
+        if (error) {
+            console.error('Error adding daily metric:', error);
+            alert('Erro ao salvar métrica. Verifique se a data já existe e tente novamente.');
+        } else {
+            alert('Métrica salva com sucesso!');
+            onMetricAdded(); // Callback to refresh data
+        }
+        setIsSubmitting(false);
+    };
+
+    return (
+        <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+            <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold">Adicionar Métricas Diárias</h3>
+                <FiHelpCircle data-tooltip-id="daily-metrics-form-tooltip" className="text-white cursor-help" />
+            </div>
+            <ReactTooltip id="daily-metrics-form-tooltip" place="top" className="bg-gray-800 text-white border border-gray-600 max-w-sm">
+                Preencha os campos abaixo para adicionar as métricas de atendimento do dia.
+                <br />- <strong>Conversas iniciadas no WhatsApp:</strong> Total de novas conversas no WhatsApp no dia.
+                <br />- <strong>Links de avaliação enviados via WhatsApp:</strong> Quantos links de avaliação foram enviados aos clientes.
+                <br />- <strong>Avaliações finalizadas:</strong> Quantos clientes preencheram nome e telefone.
+            </ReactTooltip>
+            <form onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input type="number" placeholder="Conversas iniciadas no WhatsApp" value={conversations} onChange={e => setConversations(Number(e.target.value))} required className="bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input type="number" placeholder="Links de avaliação enviados via WhatsApp" value={linksSent} onChange={e => setLinksSent(Number(e.target.value))} required className="bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input type="number" placeholder="Avaliações finalizadas (nome e telefone)" value={finishedEvaluation} onChange={e => setFinishedEvaluation(Number(e.target.value))} required className="bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <button type="submit" disabled={isSubmitting} className="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-500 flex items-center justify-center">
+                    <FiPlus className="mr-2" />
+                    {isSubmitting ? 'Salvando...' : 'Salvar Métrica'}
+                </button>
+            </form>
+        </div>
+    );
+};
+
 
 export default function Admin() {
   const [data, setData] = useState<DashboardData | null>(null)
 
-  useEffect(() => {
+  const fetchData = () => {
     getData().then(setData)
+  }
+
+  useEffect(() => {
+    fetchData()
   }, [])
 
   if (!data) return <div className="min-h-screen bg-gray-900 flex items-center justify-center"><div className="text-lg text-white">Carregando...</div></div>
@@ -108,166 +200,161 @@ export default function Admin() {
   const renderCustomizedLabel = (props: any) => {
     const { index } = props
     const entry = data.chartDataNotas[index]
+    if (!entry) return null;
     return `${entry.nota}: ${entry.percentage.toFixed(1)}%`
   }
+  
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-2">
-      <div className="max-w-5xl mx-auto">
-          <h1 className="text-xl font-bold text-white mb-4 flex items-center">
-            Dashboard de Marketing
-            <FiHelpCircle
-              data-tooltip-id="dashboard-tooltip"
-              className="ml-2 text-white cursor-help"
-            />
-          </h1>
-          <ReactTooltip id="dashboard-tooltip" place="right" className="bg-gray-800 text-white border border-gray-600">
-            Este dashboard mostra métricas de acessos, respostas ao questionário e análise de satisfação (NPS).
-          </ReactTooltip>
+    <div className="min-h-screen bg-gray-900 text-white p-4">
+      <div className="max-w-7xl mx-auto">
+          <h1 className="text-2xl font-bold text-white mb-6">Dashboard de Marketing</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
-        <div className="bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-700">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-300">Total Acessos Únicos</h2>
-            <FiHelpCircle
-              data-tooltip-id="acessos-tooltip"
-              className="text-white cursor-help"
-            />
-          </div>
-          <p className="text-xl font-bold text-blue-400 mt-1">{data.totalAcessos}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+            <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-gray-300">Total Acessos Únicos</h2>
+                <FiHelpCircle data-tooltip-id="total-acessos-tooltip" className="text-white cursor-help" />
+            </div>
+            <p className="text-2xl font-bold text-blue-400 mt-1">{data.totalAcessos}</p>
+            <ReactTooltip id="total-acessos-tooltip" place="top" className="bg-gray-800 text-white border border-gray-600">
+                Número total de visitantes únicos que acessaram a página inicial da pesquisa.
+            </ReactTooltip>
         </div>
-        <ReactTooltip id="acessos-tooltip" className="bg-gray-800 text-white border border-gray-600">
-          Número total de acessos únicos ao questionário.
-        </ReactTooltip>
-        <div className="bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-700">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-300">Total Respostas</h2>
-            <FiHelpCircle
-              data-tooltip-id="respostas-tooltip"
-              className="text-white cursor-help"
-            />
-          </div>
-          <p className="text-xl font-bold text-green-400 mt-1">{data.totalRespostas}</p>
+        <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+            <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-gray-300">Avaliações Iniciadas</h2>
+                <FiHelpCircle data-tooltip-id="avaliacoes-iniciadas-tooltip" className="text-white cursor-help" />
+            </div>
+            <p className="text-2xl font-bold text-yellow-400 mt-1">{data.avaliacoesIniciadas}</p>
+            <ReactTooltip id="avaliacoes-iniciadas-tooltip" place="top" className="bg-gray-800 text-white border border-gray-600">
+                Número total de usuários que iniciaram o questionário.
+            </ReactTooltip>
         </div>
-        <ReactTooltip id="respostas-tooltip" className="bg-gray-800 text-white border border-gray-600">
-          Número total de respostas completadas ao questionário.
-        </ReactTooltip>
-        <div className="bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-700">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-300">NPS Geral</h2>
-            <FiHelpCircle
-              data-tooltip-id="nps-tooltip"
-              className="text-white cursor-help"
-            />
-          </div>
-          <p className="text-xl font-bold text-purple-400 mt-1">{data.npsGeral.toFixed(1)}</p>
-          <p className="text-xs text-gray-400 mt-1">0-3: Ruim | 4-7: Bom | 8-10: Excelente</p>
+        <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+            <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-gray-300">Avaliações Finalizadas</h2>
+                <FiHelpCircle data-tooltip-id="avaliacoes-finalizadas-tooltip" className="text-white cursor-help" />
+            </div>
+            <p className="text-2xl font-bold text-green-400 mt-1">{data.totalRespostas}</p>
+            <ReactTooltip id="avaliacoes-finalizadas-tooltip" place="top" className="bg-gray-800 text-white border border-gray-600">
+                Número total de usuários que finalizaram o questionário (preencheram nome e telefone).
+            </ReactTooltip>
         </div>
-        <ReactTooltip id="nps-tooltip" className="bg-gray-800 text-white border border-gray-600">
-          Net Promoter Score médio, indicando satisfação geral (0-10).
-        </ReactTooltip>
-        <div className="bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-700 md:col-span-1">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-300">Médias das Perguntas</h2>
-            <FiHelpCircle
-              data-tooltip-id="medias-tooltip"
-              className="text-white cursor-help"
-            />
-          </div>
-          <ul className="mt-1 space-y-1">
-            {data.medias.map((m: Media) => {
-              const emoji = m.avg < 2 ? '😞' : m.avg < 3 ? '😐' : m.avg < 4 ? '🙂' : m.avg < 5 ? '😀' : '😍';
-              return (
-                <li key={m.question} className="text-xs text-gray-400">{emoji} {m.question}: <span className="font-semibold text-white">{m.avg.toFixed(1)}</span></li>
-              );
-            })}
-          </ul>
-        </div>
-        <ReactTooltip id="medias-tooltip" className="bg-gray-800 text-white border border-gray-600">
-          Média das respostas para cada pergunta (1-5).
-        </ReactTooltip>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div className="bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-700">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold text-gray-300">Respostas por Dia</h2>
-            <FiHelpCircle
-              data-tooltip-id="respostas-dia-tooltip"
-              className="text-white cursor-help"
-            />
-          </div>
-          <ReactTooltip id="respostas-dia-tooltip" className="bg-gray-800 text-white border border-gray-600">
-            Gráfico mostrando o número de respostas recebidas por dia.
-          </ReactTooltip>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={data.chartDataDia}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="date" stroke="#9CA3AF" />
-              <YAxis stroke="#9CA3AF" />
-              <Tooltip contentStyle={{ backgroundColor: '#1F2937', color: '#F9FAFB' }} />
-              <Bar dataKey="count" fill="#3B82F6" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-700">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold text-gray-300">Distribuição de Notas NPS</h2>
-            <FiHelpCircle
-              data-tooltip-id="nps-dist-tooltip"
-              className="text-white cursor-help"
-            />
-          </div>
-          <ReactTooltip id="nps-dist-tooltip" className="bg-gray-800 text-white border border-gray-600">
-            Distribuição das notas NPS agrupadas: Vermelho (0-3: Ruim), Amarelo (4-7: Bom), Verde (8-10: Excelente).
-          </ReactTooltip>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={data.chartDataNotas}
-                dataKey="count"
-                nameKey="nota"
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                label={renderCustomizedLabel}
-                labelLine={false}
-              >
-                {data.chartDataNotas.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value, name) => [`${value} respostas`, `Nota ${name}`]} />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+        <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+            <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-gray-300">NPS Geral</h2>
+                <FiHelpCircle data-tooltip-id="nps-geral-tooltip" className="text-white cursor-help" />
+            </div>
+            <p className="text-2xl font-bold text-purple-400 mt-1">{data.npsGeral.toFixed(1)}</p>
+            <ReactTooltip id="nps-geral-tooltip" place="top" className="bg-gray-800 text-white border border-gray-600">
+                A média geral do Net Promoter Score (NPS) de todas as respostas.
+            </ReactTooltip>
         </div>
       </div>
-
-      <div className="bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-700">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold text-gray-300">Tabela de Respostas</h2>
-          <FiHelpCircle
-            data-tooltip-id="tabela-tooltip"
-            className="text-white cursor-help"
-          />
+      
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+                    <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-lg font-semibold text-gray-300">Respostas por Dia</h2>
+                        <FiHelpCircle data-tooltip-id="respostas-dia-tooltip" className="text-white cursor-help" />
+                    </div>
+                    <ReactTooltip id="respostas-dia-tooltip" place="top" className="bg-gray-800 text-white border border-gray-600">
+                        Gráfico de barras mostrando o número de respostas à pesquisa recebidas a cada dia.
+                    </ReactTooltip>
+                    <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={data.chartDataDia}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis dataKey="date" stroke="#9CA3AF" />
+                        <YAxis stroke="#9CA3AF" />
+                        <Tooltip contentStyle={{ backgroundColor: '#1F2937', color: '#F9FAFB' }} />
+                        <Bar dataKey="count" fill="#3B82F6" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+                <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+                    <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-lg font-semibold text-gray-300">Distribuição de Notas NPS</h2>
+                        <FiHelpCircle data-tooltip-id="distribuicao-nps-tooltip" className="text-white cursor-help" />
+                    </div>
+                    <ReactTooltip id="distribuicao-nps-tooltip" place="top" className="bg-gray-800 text-white border border-gray-600">
+                        Gráfico de pizza mostrando a proporção de notas NPS ruins (0-3), boas (4-7) e excelentes (8-10).
+                    </ReactTooltip>
+                    <ResponsiveContainer width="100%" height={250}>
+                        <PieChart>
+                        <Pie data={data.chartDataNotas} dataKey="count" nameKey="nota" cx="50%" cy="50%" outerRadius={80} label={renderCustomizedLabel} labelLine={false}>
+                            {data.chartDataNotas.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                        </Pie>
+                        <Tooltip formatter={(value: number, name: string) => [`${value} respostas`, `Nota ${name}`]} />
+                        <Legend />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+             <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-lg font-semibold text-gray-300">Cliques na Página de Agradecimento</h2>
+                    <FiHelpCircle data-tooltip-id="agradecimento-cliques-tooltip" className="text-white cursor-help" />
+                </div>
+                <ReactTooltip id="agradecimento-cliques-tooltip" place="top" className="bg-gray-800 text-white border border-gray-600">
+                    Gráfico de pizza mostrando a quantidade de cliques nos links do Google e Instagram na página de agradecimento.
+                </ReactTooltip>
+                <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                        <Pie data={data.agradecimentoCliques} dataKey="count" nameKey="link_type" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label>
+                            {data.agradecimentoCliques.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                    </PieChart>
+                </ResponsiveContainer>
+            </div>
         </div>
-        <ReactTooltip id="tabela-tooltip" className="bg-gray-800 text-white border border-gray-600">
-          Tabela detalhada de todas as respostas, incluindo timestamp, notas e dados pessoais.
-        </ReactTooltip>
+        
+        <div className="mb-6">
+            <DailyMetricsForm onMetricAdded={fetchData} />
+        </div>
+
+        <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700 mb-6">
+            <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-semibold text-gray-300">Métricas Diárias de Atendimento</h2>
+                <FiHelpCircle data-tooltip-id="metricas-diarias-tooltip" className="text-white cursor-help" />
+            </div>
+            <ReactTooltip id="metricas-diarias-tooltip" place="top" className="bg-gray-800 text-white border border-gray-600">
+                Gráfico de barras mostrando as métricas de atendimento inseridas manualmente a cada dia.
+            </ReactTooltip>
+            <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={data.dailyMetrics}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="date" stroke="#9CA3AF" />
+                    <YAxis stroke="#9CA3AF" />
+                    <Tooltip contentStyle={{ backgroundColor: '#1F2937', color: '#F9FAFB' }} />
+                    <Legend />
+                    <Bar dataKey="conversations_started" name="Conversas Iniciadas" fill="#8884d8" />
+                    <Bar dataKey="evaluation_links_sent" name="Links Enviados" fill="#82ca9d" />
+                    <Bar dataKey="finished_evaluation" name="Avaliações Finalizadas" fill="#ffc658" />
+                </BarChart>
+            </ResponsiveContainer>
+        </div>
+
+
+      <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+        <h2 className="text-lg font-semibold text-gray-300 mb-2">Tabela de Respostas</h2>
         <div className="overflow-x-auto">
           <table className="w-full table-auto border-collapse">
             <thead>
               <tr className="bg-gray-700">
                 <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Timestamp</th>
                 <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">NPS</th>
-                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Q1</th>
-                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Q2</th>
-                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Q3</th>
-                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Q4</th>
-                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Q5</th>
+                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Q1-Q5</th>
                 <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Nome</th>
                 <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Telefone</th>
+                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Origem</th>
                 <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Duração (s)</th>
               </tr>
             </thead>
@@ -276,13 +363,10 @@ export default function Admin() {
                 <tr key={i} className="hover:bg-gray-700">
                   <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{new Date(r.created_at).toLocaleString()}</td>
                   <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.nps_score}</td>
-                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.q1}</td>
-                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.q2}</td>
-                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.q3}</td>
-                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.q4}</td>
-                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.q5}</td>
+                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{[r.q1,r.q2,r.q3,r.q4,r.q5].join(', ')}</td>
                   <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.nome || '-'}</td>
                   <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.telefone || '-'}</td>
+                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.origem || '-'}</td>
                   <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{(r.duration / 1000).toFixed(1)}</td>
                 </tr>
               ))}
@@ -292,6 +376,5 @@ export default function Admin() {
       </div>
     </div>
     </div>
-
   )
 }

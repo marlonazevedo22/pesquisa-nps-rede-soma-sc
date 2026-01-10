@@ -5,6 +5,7 @@ CREATE TABLE acessos (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   ip_hash TEXT NOT NULL,
   user_agent TEXT,
+  source TEXT, -- google, instagram, etc
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -24,6 +25,24 @@ CREATE TABLE respostas (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Table for daily metrics
+CREATE TABLE daily_metrics (
+    id SERIAL PRIMARY KEY,
+    date DATE NOT NULL UNIQUE,
+    conversations_started INTEGER,
+    evaluation_links_sent INTEGER,
+    finished_evaluation INTEGER
+);
+
+-- Table for tracking clicks on the thank you page
+CREATE TABLE agradecimento_cliques (
+    id SERIAL PRIMARY KEY,
+    link_type TEXT NOT NULL, -- 'google' or 'instagram'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+
 -- Indexes for performance
 CREATE INDEX idx_acessos_created_at ON acessos(created_at);
 CREATE INDEX idx_respostas_created_at ON respostas(created_at);
+CREATE INDEX idx_daily_metrics_date ON daily_metrics(date);

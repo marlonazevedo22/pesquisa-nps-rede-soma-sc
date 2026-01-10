@@ -6,12 +6,13 @@ Uma aplicação web fullstack para coletar feedback de clientes da Rede Soma Av.
 
 - **Home**: Tela de boas-vindas com pergunta NPS (0-10) e botões intuitivos.
 - **Questionário**: 5 perguntas de satisfação com ratings emoji (1-5), formatação incremental de telefone e campos opcionais para nome e telefone.
-- **Obrigado**: Página final com ícones maiores e links para Google e Instagram.
+- **Obrigado**: Página final com ícones maiores e links para Google e Instagram, com rastreamento de cliques.
 - **Dashboard Premium (/admin/dashboard)**:
   - Tema escuro premium com tooltips informativos.
-  - Cards de métricas: Total Acessos, Total Respostas, NPS Geral, Médias das Perguntas.
-  - Gráficos: Respostas por dia (barras) e Distribuição NPS agrupada (0-3: Ruim, 4-7: Bom, 8-10: Excelente) com legenda e labels de porcentagem.
-  - Tabela completa de respostas com exportação visual.
+  - Cards de métricas: Total Acessos, Avaliações Iniciadas, Avaliações Finalizadas, NPS Geral.
+  - Gráficos: Respostas por dia, Distribuição NPS, Cliques na Página de Agradecimento.
+  - Formulário para inserção de métricas diárias (Conversas iniciadas no WhatsApp, Links de avaliação enviados, Avaliações finalizadas).
+  - Tabela completa de respostas.
   - Tooltips interativos em todos os cards e gráficos.
   - Acesso restrito via autenticação Supabase.
 
@@ -31,7 +32,7 @@ Uma aplicação web fullstack para coletar feedback de clientes da Rede Soma Av.
 1. Instale as dependências: `npm install`
 2. Configure o Supabase:
    - Crie um projeto no Supabase.
-   - Execute o script em `schema.sql` para criar as tabelas.
+   - Execute o script em `schema.sql` para criar as tabelas. Se as tabelas já existirem, execute as queries de `ALTER TABLE` para atualizá-las.
    - Adicione as variáveis de ambiente em `.env.local`:
      ```
      NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
@@ -42,8 +43,10 @@ Uma aplicação web fullstack para coletar feedback de clientes da Rede Soma Av.
 
 ## Esquema do Banco
 
-- `acessos`: Registra acessos únicos (IP-based).
+- `acessos`: Registra acessos únicos.
 - `respostas`: Armazena NPS, ratings Q1-Q5, nome, telefone e duração.
+- `daily_metrics`: Armazena métricas diárias inseridas manualmente (conversas iniciadas, links enviados, avaliações finalizadas).
+- `agradecimento_cliques`: Registra cliques nos links da página de agradecimento.
 
 ## Desenvolvimento
 
@@ -59,8 +62,7 @@ Uma aplicação web fullstack para coletar feedback de clientes da Rede Soma Av.
 2. **Configure variáveis de ambiente** no dashboard do Vercel:
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  - (opcional) `ADMIN_PASSWORD` (caso use proteção adicional)
 3. **Deploy automático**: O Vercel fará o build e deploy automaticamente.
-4. **Acesso ao Admin**: Use `?password=sua_senha` na URL ou header `Authorization: Bearer sua_senha` para /admin.
+4. **Acesso ao Admin**: Acesso ao dashboard de admin é restrito.
 
 **Nota**: O middleware protege /admin com senha simples. Para produção, considere autenticação mais robusta.

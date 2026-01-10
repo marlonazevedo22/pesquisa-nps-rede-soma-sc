@@ -1,7 +1,14 @@
+'use client'
+
 import { FaGoogle, FaInstagram } from 'react-icons/fa'
 import Image from 'next/image'
+import { supabase } from '../../lib/supabase'
 
 export default function Obrigado() {
+  const handleLinkClick = async (linkType: 'google' | 'instagram') => {
+    await supabase.from('agradecimento_cliques').insert({ link_type: linkType });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 max-w-sm sm:max-w-md w-full text-center">
@@ -17,6 +24,7 @@ export default function Obrigado() {
             href="https://www.google.com/maps/place/Rede+Soma+Drogarias+-+Av.+Sete/@-21.7593967,-43.3442163,17z/data=!4m8!3m7!1s0x989ca434dcdf31:0xe83ba71aa28dffc7!8m2!3d-21.7594017!4d-43.3416414!9m1!1b1!16s%2Fg%2F11dym4ltn_?entry=ttu&g_ep=EgoyMDI2MDEwNC4wIKXMDSoASAFQAw%3D%3D"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => handleLinkClick('google')}
             className="flex items-center justify-center gap-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition text-sm sm:text-base"
           >
             <FaGoogle size={32} />
@@ -26,6 +34,7 @@ export default function Obrigado() {
             href="https://www.instagram.com/redesoma_av7/"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => handleLinkClick('instagram')}
             className="flex items-center justify-center gap-2 bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 transition text-sm sm:text-base"
           >
             <FaInstagram size={32} />
