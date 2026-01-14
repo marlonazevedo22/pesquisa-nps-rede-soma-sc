@@ -65,6 +65,10 @@ async function getData(): Promise<DashboardData> {
   const { data: respostas } = await supabase.from('respostas').select('*')
   const { data: dailyMetricsData } = await supabase.from('daily_metrics').select('*').order('date', { ascending: true });
   const { data: agradecimentoCliquesData } = await supabase.from('agradecimento_cliques').select('*');
+  const { count: startedCount } = await supabase
+    .from('logs')
+    .select('*', { count: 'exact', head: true })
+    .eq('evento', 'inicio_questionario');
 
   const totalAcessos = acessos?.length || 0
   const totalRespostas = respostas?.length || 0
@@ -121,7 +125,7 @@ async function getData(): Promise<DashboardData> {
     respostas: respostas || [],
     agradecimentoCliques,
     dailyMetrics: dailyMetricsData || [],
-    avaliacoesIniciadas: totalRespostas,
+    avaliacoesIniciadas: startedCount || totalRespostas,
   }
 }
 
@@ -129,7 +133,6 @@ const DailyMetricsForm = ({ onMetricAdded }: { onMetricAdded: () => void }) => {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [conversations, setConversations] = useState(0);
     const [linksSent, setLinksSent] = useState(0);
-    const [finishedEvaluation, setFinishedEvaluation] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -140,13 +143,12 @@ const DailyMetricsForm = ({ onMetricAdded }: { onMetricAdded: () => void }) => {
             date,
             conversations_started: conversations,
             evaluation_links_sent: linksSent,
-            finished_evaluation: finishedEvaluation,
         };
 
         const { error } = await supabase.from('daily_metrics').upsert(metric, { onConflict: 'date' });
 
         if (error) {
-            console.error('Error adding daily metric:', error);
+            console.error('Error adding daily metric:', error.message || error);
             alert('Erro ao salvar métrica. Verifique se a data já existe e tente novamente.');
         } else {
             alert('Métrica salva com sucesso!');
@@ -165,14 +167,21 @@ const DailyMetricsForm = ({ onMetricAdded }: { onMetricAdded: () => void }) => {
                 Preencha os campos abaixo para adicionar as métricas de atendimento do dia.
                 <br />- <strong>Conversas iniciadas no WhatsApp:</strong> Total de novas conversas no WhatsApp no dia.
                 <br />- <strong>Links de avaliação enviados via WhatsApp:</strong> Quantos links de avaliação foram enviados aos clientes.
-                <br />- <strong>Avaliações finalizadas:</strong> Quantos clientes preencheram nome e telefone.
             </ReactTooltip>
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    <input type="number" placeholder="Conversas iniciadas no WhatsApp" value={conversations} onChange={e => setConversations(Number(e.target.value))} required className="bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    <input type="number" placeholder="Links de avaliação enviados via WhatsApp" value={linksSent} onChange={e => setLinksSent(Number(e.target.value))} required className="bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    <input type="number" placeholder="Avaliações finalizadas (nome e telefone)" value={finishedEvaluation} onChange={e => setFinishedEvaluation(Number(e.target.value))} required className="bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-1">Data</label>
+                        <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white" />
+                    </div>
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-1">Conversas iniciadas no WhatsApp</label>
+                        <input type="number" value={conversations} onChange={e => setConversations(Number(e.target.value))} required className="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white" />
+                    </div>
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-1">Links de avaliação enviados</label>
+                        <input type="number" value={linksSent} onChange={e => setLinksSent(Number(e.target.value))} required className="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white" />
+                    </div>
                 </div>
                 <button type="submit" disabled={isSubmitting} className="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-500 flex items-center justify-center">
                     <FiPlus className="mr-2" />
@@ -206,6 +215,7 @@ export default function Admin() {
   
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
+  const totalClicks = data.agradecimentoCliques.reduce((acc, curr) => acc + curr.count, 0);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
@@ -255,6 +265,30 @@ export default function Admin() {
         </div>
       </div>
       
+      <div className="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700 mb-6">
+        <h2 className="text-lg font-semibold text-gray-300 mb-4">Funil de Engajamento</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-gray-700/50 p-4 rounded-lg">
+                <p className="text-sm text-gray-400">Iniciaram o Questionário</p>
+                <p className="text-2xl font-bold text-white">{data.avaliacoesIniciadas}</p>
+            </div>
+            <div className="bg-gray-700/50 p-4 rounded-lg">
+                <p className="text-sm text-gray-400">Completaram</p>
+                <p className="text-2xl font-bold text-green-400">{data.totalRespostas}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                    {data.avaliacoesIniciadas > 0 ? ((data.totalRespostas / data.avaliacoesIniciadas) * 100).toFixed(1) : 0}% de conversão
+                </p>
+            </div>
+            <div className="bg-gray-700/50 p-4 rounded-lg">
+                <p className="text-sm text-gray-400">Clicaram em Redes</p>
+                <p className="text-2xl font-bold text-blue-400">{totalClicks}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                    {data.totalRespostas > 0 ? ((totalClicks / data.totalRespostas) * 100).toFixed(1) : 0}% de engajamento
+                </p>
+            </div>
+        </div>
+      </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
@@ -304,15 +338,23 @@ export default function Admin() {
                 <ReactTooltip id="agradecimento-cliques-tooltip" place="top" className="bg-gray-800 text-white border border-gray-600">
                     Gráfico de pizza mostrando a quantidade de cliques nos links do Google e Instagram na página de agradecimento.
                 </ReactTooltip>
-                <ResponsiveContainer width="100%" height={250}>
-                    <PieChart>
-                        <Pie data={data.agradecimentoCliques} dataKey="count" nameKey="link_type" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label>
-                            {data.agradecimentoCliques.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                    </PieChart>
-                </ResponsiveContainer>
+                <div className="h-64 w-full">
+                    {data.agradecimentoCliques.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie data={data.agradecimentoCliques} dataKey="count" nameKey="link_type" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                                    {data.agradecimentoCliques.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                                </Pie>
+                                <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: 'none', color: '#fff' }} />
+                                <Legend verticalAlign="bottom" height={36}/>
+                            </PieChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="h-full flex items-center justify-center text-gray-500">
+                            Nenhum clique registrado ainda
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
         
@@ -337,7 +379,6 @@ export default function Admin() {
                     <Legend />
                     <Bar dataKey="conversations_started" name="Conversas Iniciadas" fill="#8884d8" />
                     <Bar dataKey="evaluation_links_sent" name="Links Enviados" fill="#82ca9d" />
-                    <Bar dataKey="finished_evaluation" name="Avaliações Finalizadas" fill="#ffc658" />
                 </BarChart>
             </ResponsiveContainer>
         </div>

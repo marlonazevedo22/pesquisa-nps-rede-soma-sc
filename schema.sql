@@ -1,4 +1,5 @@
 -- Schema for Rede Soma Av. Sete NPS Survey
+-- Schema for Rede Soma Santa Cruz NPS Survey
 
 -- Table for tracking accesses
 CREATE TABLE acessos (

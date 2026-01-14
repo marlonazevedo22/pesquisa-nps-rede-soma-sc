@@ -1,6 +1,6 @@
-# Rede Soma Av. Sete NPS Survey
+# Rede Soma Santa Cruz NPS Survey
 
-Uma aplicação web fullstack para coletar feedback de clientes da Rede Soma Av. Sete usando Next.js, Tailwind CSS, TypeScript e Supabase.
+Uma aplicação web fullstack para coletar feedback de clientes da Rede Soma Santa Cruz usando Next.js, Tailwind CSS, TypeScript e Supabase.
 
 ## Funcionalidades
 
@@ -37,6 +37,7 @@ Uma aplicação web fullstack para coletar feedback de clientes da Rede Soma Av.
      ```
      NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
      NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+     ADMIN_PASSWORD=sua_senha_segura
      ```
 3. Adicione o logo em `public/logo.png`.
 4. Execute o servidor de desenvolvimento: `npm run dev`
@@ -62,7 +63,6 @@ Uma aplicação web fullstack para coletar feedback de clientes da Rede Soma Av.
 2. **Configure variáveis de ambiente** no dashboard do Vercel:
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `ADMIN_PASSWORD` (Senha para acessar o painel administrativo)
 3. **Deploy automático**: O Vercel fará o build e deploy automaticamente.
-4. **Acesso ao Admin**: Acesso ao dashboard de admin é restrito.
-
-**Nota**: O middleware protege /admin com senha simples. Para produção, considere autenticação mais robusta.
+4. **Acesso ao Admin**: Acesso ao dashboard de admin é restrito via Basic Auth (usuário: admin).

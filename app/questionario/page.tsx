@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { supabase } from '../../lib/supabase'
 import { Tooltip as ReactTooltip } from 'react-tooltip'
 import { FiHelpCircle } from 'react-icons/fi'
+import logo from '../obrigado/REDE-SOMA-AZUL.png'
 
 const questions = [
   { text: 'Qualidade do atendimento?', tooltip: 'Avalie a qualidade do serviço prestado pelos nossos atendentes.' },
@@ -71,7 +72,7 @@ export default function Questionario() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex flex-col items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 max-w-sm sm:max-w-lg w-full">
         <div className="mb-6 text-center">
-          <Image src="/logo.png" alt="Rede Soma Av. Sete" width={96} height={96} className="mx-auto" />
+          <Image src={logo} alt="Rede Soma Santa Cruz" width={96} height={96} className="mx-auto" />
         </div>
         <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-8">Questionário de Satisfação</h1>
         {questions.map((q, i) => (
