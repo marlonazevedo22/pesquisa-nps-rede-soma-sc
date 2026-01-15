@@ -1,142 +1,59 @@
-// ...existing code from app/questionario/page.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '../lib/supabase'
-import { Tooltip as ReactTooltip } from 'react-tooltip'
-import { FiHelpCircle } from 'react-icons/fi'
 
-const questions = [
-  { text: 'Qualidade do atendimento?', tooltip: 'Avalie a qualidade do serviço prestado pelos nossos atendentes.' },
-  { text: 'Tempo de resposta no WhatsApp?', tooltip: 'Quanto tempo levou para receber resposta no WhatsApp?' },
-  { text: 'Encontrou o que procurava?', tooltip: 'Você conseguiu encontrar os produtos ou informações que precisava?' },
-  { text: 'Agilidade na entrega?', tooltip: 'Como foi a rapidez da entrega dos produtos?' },
-  { text: 'Facilidade geral do processo?', tooltip: 'O processo de compra foi fácil e intuitivo?' },
-]
-
-export default function Questionario() {
-  const [answers, setAnswers] = useState<number[]>(new Array(5).fill(0))
-  const [nome, setNome] = useState('')
-  const [telefone, setTelefone] = useState('')
+export default function Home() {
   const router = useRouter()
 
   useEffect(() => {
-    // Tracking de acesso único
     const urlParams = new URLSearchParams(window.location.search);
     const source = urlParams.get('utm_source');
+
+    // Tracking de acesso único
     const visitorId = localStorage.getItem('visitorId') || crypto.randomUUID()
     localStorage.setItem('visitorId', visitorId)
+
     if (source) {
       sessionStorage.setItem('referralSource', source);
     }
-    sessionStorage.setItem('startTime', new Date().getTime().toString())
+
+    // Registrar acesso
+    supabase.from('acessos').insert({
+      ip_hash: visitorId, // usando visitorId como hash
+      user_agent: navigator.userAgent,
+      source: source,
+    })
   }, [])
 
-  const handleAnswer = (index: number, value: number) => {
-    const newAnswers = [...answers]
-    newAnswers[index] = value
-    setAnswers(newAnswers)
-  }
-
-  const formatPhone = (value: string) => {
-    const cleaned = value.replace(/\D/g, '')
-    if (cleaned.length <= 2) {
-      return cleaned ? `(${cleaned}` : ''
-    } else if (cleaned.length <= 7) {
-      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`
-    } else {
-      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`
-    }
-  }
-
-  const handleSubmit = async () => {
-    const startTime = parseInt(sessionStorage.getItem('startTime') || '0')
-    const referralSource = sessionStorage.getItem('referralSource');
-    const duration = Date.now() - startTime
-
-    await supabase.from('respostas').insert({
-      nps_score: answers[0],
-      q1: answers[0],
-      q2: answers[1],
-      q3: answers[2],
-      q4: answers[3],
-      q5: answers[4],
-      nome: nome || null,
-      telefone: telefone || null,
-      origem: referralSource || null,
-      duration,
-    })
-
-    router.push('/obrigado')
+  const handleScoreSelect = (score: number) => {
+    // Salvar temporariamente ou passar via state
+    sessionStorage.setItem('npsScore', score.toString())
+    sessionStorage.setItem('startTime', new Date().getTime().toString())
+    router.push('/questionario')
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex flex-col items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 max-w-sm sm:max-w-lg w-full">
-        <div className="mb-6 text-center">
-          <Image src="/logo.png" alt="Rede Soma Santa Cruz" width={96} height={96} className="mx-auto" />
-        </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-8">Questionário de Satisfação</h1>
-        {questions.map((q, i) => (
-          <div key={i} className="mb-6">
-            <div className="flex items-center mb-2">
-              <p className="text-sm sm:text-base text-gray-700 mr-2">{q.text}</p>
-              <FiHelpCircle
-                data-tooltip-id={`tooltip-${i}`}
-                className="text-gray-400 cursor-help text-sm"
-              />
-            </div>
-            <ReactTooltip id={`tooltip-${i}`}>
-              {q.tooltip}
-            </ReactTooltip>
-            <div className="flex gap-1">
-              {[
-                { val: 1, emoji: '😞' },
-                { val: 2, emoji: '😐' },
-                { val: 3, emoji: '🙂' },
-                { val: 4, emoji: '😀' },
-                { val: 5, emoji: '😍' },
-              ].map(({ val, emoji }) => (
-                <button
-                  key={val}
-                  onClick={() => handleAnswer(i, val)}
-                  className={`text-2xl p-2 rounded-lg border-2 transition-all duration-200 ${
-                    val === answers[i]
-                      ? 'bg-blue-100 border-blue-400 text-blue-700 scale-110'
-                      : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100'
-                  }`}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
+      <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 max-w-sm sm:max-w-md w-full text-center">
         <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Nome (opcional)"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-          />
-          <input
-            type="tel"
-            inputMode="numeric"
-            placeholder="Telefone (opcional)"
-            value={telefone}
-            onChange={(e) => setTelefone(formatPhone(e.target.value))}
-            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-          />
+          <Image src="/logo.png" alt="Rede Soma Santa Cruz" width={128} height={128} className="mx-auto" />
         </div>
-        <button
-          onClick={handleSubmit}
-          className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition text-sm sm:text-base"
-        >
-          Enviar Avaliação
-        </button>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Bem-vindo à Rede Soma Santa Cruz</h1>
+        <p className="text-sm sm:text-base text-gray-600 mb-6">De 0 a 10, qual a probabilidade de nos recomendar?</p>
+        <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mb-6">
+          {Array.from({ length: 11 }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => handleScoreSelect(i)}
+              className="bg-blue-600 text-white px-2 sm:px-3 py-2 rounded hover:bg-blue-700 transition text-sm sm:text-base"
+            >
+              {i}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
