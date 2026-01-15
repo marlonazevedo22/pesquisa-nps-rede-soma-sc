@@ -105,7 +105,7 @@ async function getData(): Promise<DashboardData> {
     return { nota: range, count: count as number, fill, percentage }
   })
   
-    const agradecimentoCliquesCounts = (agradecimentoCliquesData || []).reduce((acc, r: any) => {
+    const agradecimentoCliquesCounts = ((agradecimentoCliquesData || []) as any[]).reduce((acc, r) => {
         acc[r.link_type] = (acc[r.link_type] || 0) + 1;
         return acc;
     }, {} as Record<string, number>);
