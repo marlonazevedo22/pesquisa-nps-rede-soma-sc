@@ -110,9 +110,9 @@ async function getData(): Promise<DashboardData> {
         return acc;
     }, {} as Record<string, number>);
 
-    const agradecimentoCliques = Object.entries(agradecimentoCliquesCounts).map(([link_type, count]) => ({
+    const agradecimentoCliques: AgradecimentoCliques[] = Object.entries(agradecimentoCliquesCounts).map(([link_type, count]) => ({
         link_type,
-        count
+        count: Number(count)
     }));
 
   return {
