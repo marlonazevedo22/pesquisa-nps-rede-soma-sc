@@ -30,7 +30,7 @@ Aplicação web para coleta de feedback de clientes (NPS) desenvolvida com Next.
    ```
 
 2. **Configuração do Supabase**:
-   Crie um projeto no Supabase e configure as tabelas necessárias (`respostas`, `acessos`, `daily_metrics`, `agradecimento_cliques`).
+   Crie um projeto no Supabase e execute o script contido no arquivo `schema.sql` (na raiz do projeto) dentro do SQL Editor do Supabase para criar todas as tabelas automaticamente.
 
 3. **Variáveis de Ambiente**:
    Crie um arquivo `.env.local` na raiz do projeto. Este arquivo **não** deve ser commitado no Git. Adicione as seguintes chaves:
