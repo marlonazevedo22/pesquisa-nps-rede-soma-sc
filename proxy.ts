@@ -5,7 +5,8 @@ export default function proxy(request: NextRequest) {
   const basicAuth = request.headers.get('authorization');
   const url = request.nextUrl.clone();
 
-  if (url.pathname.startsWith('/admin')) {
+  // Protege apenas /admin/dashboard e subrotas
+  if (url.pathname === '/admin/dashboard' || url.pathname.startsWith('/admin/dashboard/')) {
     if (!basicAuth) {
       return new NextResponse('Authentication required', {
         status: 401,
@@ -22,14 +23,12 @@ export default function proxy(request: NextRequest) {
     if (user !== 'admin' || pwd !== adminPassword) {
       return new NextResponse('Invalid credentials', { status: 401 });
     }
-
-    url.pathname = '/admin/dashboard';
-    return NextResponse.redirect(url);
+    // Acesso liberado
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin', '/admin/:path*'],
+  matcher: ['/admin/dashboard', '/admin/dashboard/:path*'],
 };
