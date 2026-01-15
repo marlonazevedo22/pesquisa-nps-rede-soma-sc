@@ -1,68 +1,52 @@
-# Rede Soma Santa Cruz NPS Survey
+# Rede Soma Santa Cruz - Pesquisa NPS
 
-Uma aplicação web fullstack para coletar feedback de clientes da Rede Soma Santa Cruz usando Next.js, Tailwind CSS, TypeScript e Supabase.
+Aplicação web para coleta de feedback de clientes (NPS) desenvolvida com Next.js, Tailwind CSS e Supabase.
 
-## Funcionalidades
+## 🚀 Funcionalidades
 
-- **Home**: Tela de boas-vindas com pergunta NPS (0-10) e botões intuitivos.
-- **Questionário**: 5 perguntas de satisfação com ratings emoji (1-5), formatação incremental de telefone e campos opcionais para nome e telefone.
-- **Obrigado**: Página final com ícones maiores e links para Google e Instagram, com rastreamento de cliques.
-- **Dashboard Premium (/admin/dashboard)**:
-  - Tema escuro premium com tooltips informativos.
-  - Cards de métricas: Total Acessos, Avaliações Iniciadas, Avaliações Finalizadas, NPS Geral.
-  - Gráficos: Respostas por dia, Distribuição NPS, Cliques na Página de Agradecimento.
-  - Formulário para inserção de métricas diárias (Conversas iniciadas no WhatsApp, Links de avaliação enviados, Avaliações finalizadas).
+- **Home**: Interface limpa para coleta de nota NPS (0-10).
+- **Questionário**: Perguntas detalhadas com avaliação por emojis e campos opcionais.
+- **Agradecimento**: Página final com redirecionamento para Google Reviews e Instagram.
+- **Dashboard Administrativo**:
+  - Visualização de métricas em tempo real (NPS, total de respostas, conversão).
+  - Gráficos de desempenho diário e distribuição de notas.
+  - Gestão de métricas manuais (WhatsApp).
   - Tabela completa de respostas.
-  - Tooltips interativos em todos os cards e gráficos.
-  - Acesso restrito via autenticação Supabase.
+  - Protegido por senha (Basic Auth).
 
-## Stack
+## 🛠️ Tecnologias
 
-- Next.js 16.1.1 (App Router)
+- **Frontend**: Next.js (App Router), React, Tailwind CSS.
+- **Backend/Dados**: Supabase.
+- **Visualização**: Recharts.
 - React 19
-- Tailwind CSS
 - TypeScript
-- Supabase (banco de dados)
-- Recharts (gráficos)
-- react-tooltip (tooltips interativos)
-- react-icons (ícones)
 
-## Configuração
+## ⚙️ Configuração Local
 
-1. Instale as dependências: `npm install`
-2. Configure o Supabase:
-   - Crie um projeto no Supabase.
-   - Execute o script em `schema.sql` para criar as tabelas. Se as tabelas já existirem, execute as queries de `ALTER TABLE` para atualizá-las.
-   - Adicione as variáveis de ambiente em `.env.local`:
-     ```
-     NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-     NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-     ADMIN_PASSWORD=sua_senha_segura
-     ```
-3. Adicione o logo em `public/logo.png`.
-4. Execute o servidor de desenvolvimento: `npm run dev`
+1. **Clone o repositório** e instale as dependências:
+   ```bash
+   npm install
+   ```
 
-## Esquema do Banco
+2. **Configuração do Supabase**:
+   Crie um projeto no Supabase e configure as tabelas necessárias (`respostas`, `acessos`, `daily_metrics`, `agradecimento_cliques`).
 
-- `acessos`: Registra acessos únicos.
-- `respostas`: Armazena NPS, ratings Q1-Q5, nome, telefone e duração.
-- `daily_metrics`: Armazena métricas diárias inseridas manualmente (conversas iniciadas, links enviados, avaliações finalizadas).
-- `agradecimento_cliques`: Registra cliques nos links da página de agradecimento.
+3. **Variáveis de Ambiente**:
+   Crie um arquivo `.env.local` na raiz do projeto. Este arquivo **não** deve ser commitado no Git. Adicione as seguintes chaves:
 
-## Desenvolvimento
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
+   ADMIN_PASSWORD=sua_senha_segura_para_admin
+   ```
 
-- Tracking de visitantes únicos via localStorage e IP.
-- Formatação de telefone incremental (XX) XXXXX-XXXX.
-- Ratings com emojis para melhor UX.
-- Dashboard responsivo com animações e tooltips escuros.
-- Build otimizado com Next.js.
+4. **Executar o projeto**:
+   ```bash
+   npm run dev
+   ```
 
-## Deploy no Vercel
+## 🔒 Segurança
 
-1. **Conecte o repositório GitHub** no [Vercel](https://vercel.com).
-2. **Configure variáveis de ambiente** no dashboard do Vercel:
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  - `ADMIN_PASSWORD` (Senha para acessar o painel administrativo)
-3. **Deploy automático**: O Vercel fará o build e deploy automaticamente.
-4. **Acesso ao Admin**: Acesso ao dashboard de admin é restrito via Basic Auth (usuário: admin).
+- **Autenticação**: O painel administrativo (`/admin`) é protegido por um Middleware que verifica a `ADMIN_PASSWORD` configurada nas variáveis de ambiente.
+- **Dados Sensíveis**: Certifique-se de que o arquivo `.env.local` está listado no `.gitignore` para não expor suas chaves de API no GitHub.
