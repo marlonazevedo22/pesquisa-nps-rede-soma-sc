@@ -303,7 +303,7 @@ export default function Admin() {
                         Gráfico de barras mostrando o número de respostas à pesquisa recebidas a cada dia.
                     </ReactTooltip>
                     <ResponsiveContainer width="100%" height={250}>
-                        <BarChart data={data.chartDataDia}>
+                        <BarChart data={data.chartDataDia as any[]}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                         <XAxis dataKey="date" stroke="#9CA3AF" />
                         <YAxis stroke="#9CA3AF" />
@@ -322,7 +322,7 @@ export default function Admin() {
                     </ReactTooltip>
                     <ResponsiveContainer width="100%" height={250}>
                         <PieChart>
-                        <Pie data={data.chartDataNotas} dataKey="count" nameKey="nota" cx="50%" cy="50%" outerRadius={80} label={renderCustomizedLabel} labelLine={false}>
+                        <Pie data={data.chartDataNotas as any[]} dataKey="count" nameKey="nota" cx="50%" cy="50%" outerRadius={80} label={renderCustomizedLabel} labelLine={false}>
                             {data.chartDataNotas.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.fill} />
                             ))}
