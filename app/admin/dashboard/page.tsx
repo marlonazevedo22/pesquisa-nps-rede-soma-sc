@@ -78,24 +78,24 @@ async function getData(): Promise<DashboardData> {
     const questionKey = `q${i}` as keyof Resposta;
     return {
         question: `Q${i}`,
-        avg: (respostas && totalRespostas > 0) ? respostas.reduce((sum, r) => sum + (r[questionKey] as number), 0) / totalRespostas : 0
+        avg: (respostas && totalRespostas > 0) ? (respostas as any[]).reduce((sum, r) => sum + (r[questionKey] as number), 0) / totalRespostas : 0
     };
   });
 
-  const respostasPorDia = respostas?.reduce((acc, r) => {
+  const respostasPorDia = ((respostas || []) as any[]).reduce((acc, r) => {
     const date = new Date(r.created_at).toLocaleDateString()
     acc[date] = (acc[date] || 0) + 1
     return acc
-  }, {} as Record<string, number>) || {}
+  }, {} as Record<string, number>);
 
   const chartDataDia = Object.entries(respostasPorDia).map(([date, count]) => ({ date, count: count as number }))
 
-  const distribuicaoNotas = respostas?.reduce((acc, r) => {
+  const distribuicaoNotas = ((respostas || []) as any[]).reduce((acc, r) => {
     if (r.nps_score <= 3) acc['0-3'] = (acc['0-3'] || 0) + 1
     else if (r.nps_score <= 7) acc['4-7'] = (acc['4-7'] || 0) + 1
     else acc['8-10'] = (acc['8-10'] || 0) + 1
     return acc
-  }, {} as Record<string, number>) || {}
+  }, {} as Record<string, number>);
 
   const chartDataNotas = Object.entries(distribuicaoNotas).map(([range, count]) => {
     let fill = '#EF4444' // red for 0-3
@@ -122,9 +122,9 @@ async function getData(): Promise<DashboardData> {
     medias,
     chartDataDia,
     chartDataNotas,
-    respostas: respostas || [],
+    respostas: (respostas || []) as any[],
     agradecimentoCliques,
-    dailyMetrics: dailyMetricsData || [],
+    dailyMetrics: (dailyMetricsData || []) as any[],
     avaliacoesIniciadas: startedCount || totalRespostas,
   }
 }
