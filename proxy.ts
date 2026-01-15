@@ -1,6 +1,7 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const basicAuth = request.headers.get('authorization');
   const url = request.nextUrl.clone();
 
