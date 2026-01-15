@@ -345,7 +345,7 @@ export default function Admin() {
                     {data.agradecimentoCliques.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                                <Pie data={data.agradecimentoCliques as any[]} dataKey="count" nameKey="link_type" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                                <Pie data={data.agradecimentoCliques as any[]} dataKey="count" nameKey="link_type" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${percent !== undefined ? (percent * 100).toFixed(0) : '0'}%`}>
                                     {data.agradecimentoCliques.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                                 </Pie>
                                 <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: 'none', color: '#fff' }} />

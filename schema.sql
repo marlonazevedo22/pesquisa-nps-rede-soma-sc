@@ -2,7 +2,7 @@
 -- Schema for Rede Soma Santa Cruz NPS Survey
 
 -- Table for tracking accesses
-CREATE TABLE acessos (
+CREATE TABLE IF NOT EXISTS acessos (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   ip_hash TEXT NOT NULL,
   user_agent TEXT,
@@ -11,7 +11,7 @@ CREATE TABLE acessos (
 );
 
 -- Table for survey responses
-CREATE TABLE respostas (
+CREATE TABLE IF NOT EXISTS respostas (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   nps_score INTEGER NOT NULL CHECK (nps_score >= 0 AND nps_score <= 10),
   q1 INTEGER NOT NULL CHECK (q1 >= 1 AND q1 <= 5),
@@ -27,7 +27,7 @@ CREATE TABLE respostas (
 );
 
 -- Table for daily metrics
-CREATE TABLE daily_metrics (
+CREATE TABLE IF NOT EXISTS daily_metrics (
     id SERIAL PRIMARY KEY,
     date DATE NOT NULL UNIQUE,
     conversations_started INTEGER,
@@ -36,14 +36,21 @@ CREATE TABLE daily_metrics (
 );
 
 -- Table for tracking clicks on the thank you page
-CREATE TABLE agradecimento_cliques (
+CREATE TABLE IF NOT EXISTS agradecimento_cliques (
     id SERIAL PRIMARY KEY,
     link_type TEXT NOT NULL, -- 'google' or 'instagram'
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Table for logging events
+CREATE TABLE IF NOT EXISTS logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  evento TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 
 -- Indexes for performance
-CREATE INDEX idx_acessos_created_at ON acessos(created_at);
-CREATE INDEX idx_respostas_created_at ON respostas(created_at);
-CREATE INDEX idx_daily_metrics_date ON daily_metrics(date);
+CREATE INDEX IF NOT EXISTS idx_acessos_created_at ON acessos(created_at);
+CREATE INDEX IF NOT EXISTS idx_respostas_created_at ON respostas(created_at);
+CREATE INDEX IF NOT EXISTS idx_daily_metrics_date ON daily_metrics(date);

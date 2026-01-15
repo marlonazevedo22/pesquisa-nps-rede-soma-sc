@@ -4,7 +4,6 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '../lib/supabase'
-import logo from './obrigado/REDE-SOMA-AZUL.png'
 
 export default function Home() {
   const router = useRouter()
@@ -26,8 +25,6 @@ export default function Home() {
       ip_hash: visitorId, // usando visitorId como hash
       user_agent: navigator.userAgent,
       source: source,
-    }).then(() => {
-      console.log('Acesso registrado')
     })
   }, [])
 
@@ -42,7 +39,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex flex-col items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 max-w-sm sm:max-w-md w-full text-center">
         <div className="mb-6">
-          <Image src={logo} alt="Rede Soma Santa Cruz" width={128} height={128} className="mx-auto" />
+          <Image src="/logo.png" alt="Rede Soma Santa Cruz" width={128} height={128} className="mx-auto" />
         </div>
         <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Bem-vindo à Rede Soma Santa Cruz</h1>
         <p className="text-sm sm:text-base text-gray-600 mb-6">De 0 a 10, qual a probabilidade de nos recomendar?</p>

@@ -12,7 +12,7 @@ Aplicação web para coleta de feedback de clientes (NPS) desenvolvida com Next.
   - Gráficos de desempenho diário e distribuição de notas.
   - Gestão de métricas manuais (WhatsApp).
   - Tabela completa de respostas.
-  - Protegido por senha (Basic Auth).
+   - Protegido por senha (usuário: admin, senha definida em ADMIN_PASSWORD).
 
 ## 🛠️ Tecnologias
 
@@ -46,7 +46,24 @@ Aplicação web para coleta de feedback de clientes (NPS) desenvolvida com Next.
    npm run dev
    ```
 
+
 ## 🔒 Segurança
 
-- **Autenticação**: O painel administrativo (`/admin`) é protegido por um Middleware que verifica a `ADMIN_PASSWORD` configurada nas variáveis de ambiente.
-- **Dados Sensíveis**: Certifique-se de que o arquivo `.env.local` está listado no `.gitignore` para não expor suas chaves de API no GitHub.
+- **Autenticação**: O painel administrativo (`/admin`) é protegido por autenticação básica (usuário: `admin`, senha definida em `ADMIN_PASSWORD` no .env.local). Todas as rotas administrativas estão protegidas.
+- **Dados Sensíveis**: O arquivo `.env.local` está no `.gitignore` e **não deve ser enviado para o GitHub**.
+
+## ☁️ Deploy (Vercel ou GitHub)
+
+1. Faça login no GitHub e crie um repositório (ou use o já existente).
+2. Suba o código do projeto (exceto `.env.local`).
+3. No painel do Vercel (ou outra plataforma), conecte o repositório e configure as variáveis de ambiente:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `ADMIN_PASSWORD`
+4. O deploy será feito automaticamente.
+
+## 🛡️ Recomendações
+
+- Troque a senha padrão do admin antes do deploy.
+- Nunca exponha o arquivo `.env.local`.
+- Para acessar o dashboard, use `/admin` (será solicitado usuário e senha).
