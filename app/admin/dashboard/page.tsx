@@ -72,17 +72,18 @@ async function getData(): Promise<DashboardData> {
 
   const totalAcessos = acessos?.length || 0
   const totalRespostas = respostas?.length || 0
-  const npsGeral = respostas && totalRespostas > 0 ? respostas.reduce((sum, r) => sum + r.nps_score, 0) / totalRespostas : 0
+  const respostasList = (respostas || []) as Resposta[]
+  const npsGeral = totalRespostas > 0 ? respostasList.reduce((sum, r) => sum + r.nps_score, 0) / totalRespostas : 0
 
   const medias = [1,2,3,4,5].map(i => {
     const questionKey = `q${i}` as keyof Resposta;
     return {
         question: `Q${i}`,
-        avg: (respostas && totalRespostas > 0) ? (respostas as any[]).reduce((sum, r) => sum + (r[questionKey] as number), 0) / totalRespostas : 0
+        avg: (totalRespostas > 0) ? respostasList.reduce((sum, r) => sum + (r[questionKey] as number), 0) / totalRespostas : 0
     };
   });
 
-  const respostasPorDia = ((respostas || []) as any[]).reduce((acc, r) => {
+  const respostasPorDia = respostasList.reduce((acc, r) => {
     const date = new Date(r.created_at).toLocaleDateString()
     acc[date] = (acc[date] || 0) + 1
     return acc
@@ -90,7 +91,7 @@ async function getData(): Promise<DashboardData> {
 
   const chartDataDia = Object.entries(respostasPorDia).map(([date, count]) => ({ date, count: count as number }))
 
-  const distribuicaoNotas = ((respostas || []) as any[]).reduce((acc, r) => {
+  const distribuicaoNotas = respostasList.reduce((acc, r) => {
     if (r.nps_score <= 3) acc['0-3'] = (acc['0-3'] || 0) + 1
     else if (r.nps_score <= 7) acc['4-7'] = (acc['4-7'] || 0) + 1
     else acc['8-10'] = (acc['8-10'] || 0) + 1
@@ -122,9 +123,9 @@ async function getData(): Promise<DashboardData> {
     medias,
     chartDataDia,
     chartDataNotas,
-    respostas: (respostas || []) as any[],
+    respostas: respostasList,
     agradecimentoCliques,
-    dailyMetrics: (dailyMetricsData || []) as any[],
+    dailyMetrics: (dailyMetricsData || []) as DailyMetric[],
     avaliacoesIniciadas: startedCount || totalRespostas,
   }
 }
@@ -324,7 +325,7 @@ export default function Admin() {
                             <Cell key={`cell-${index}`} fill={entry.fill} />
                             ))}
                         </Pie>
-                        <Tooltip formatter={(value: number, name: string) => [`${value} respostas`, `Nota ${name}`]} />
+                        <Tooltip formatter={(value: any, name: any) => [`${value || 0} respostas`, `Nota ${name}`]} />
                         <Legend />
                         </PieChart>
                     </ResponsiveContainer>
