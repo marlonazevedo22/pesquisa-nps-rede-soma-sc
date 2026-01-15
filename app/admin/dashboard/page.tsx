@@ -40,12 +40,14 @@ interface Resposta {
 interface AgradecimentoCliques {
     link_type: string;
     count: number;
+    [key: string]: any;
 }
 interface DailyMetric {
     date: string;
     conversations_started: number;
     evaluation_links_sent: number;
     finished_evaluation: number;
+    [key: string]: any;
 }
 interface DashboardData {
   totalAcessos: number;
@@ -343,7 +345,7 @@ export default function Admin() {
                     {data.agradecimentoCliques.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                                <Pie data={data.agradecimentoCliques} dataKey="count" nameKey="link_type" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                                <Pie data={data.agradecimentoCliques as any[]} dataKey="count" nameKey="link_type" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
                                     {data.agradecimentoCliques.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                                 </Pie>
                                 <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: 'none', color: '#fff' }} />
@@ -372,7 +374,7 @@ export default function Admin() {
                 Gráfico de barras mostrando as métricas de atendimento inseridas manualmente a cada dia.
             </ReactTooltip>
             <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data.dailyMetrics}>
+                <BarChart data={data.dailyMetrics as any[]}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="date" stroke="#9CA3AF" />
                     <YAxis stroke="#9CA3AF" />
