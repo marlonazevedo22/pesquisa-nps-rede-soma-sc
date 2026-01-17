@@ -19,6 +19,8 @@ export default function Questionario() {
   const [answers, setAnswers] = useState<number[]>(new Array(5).fill(0))
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
+  const [comentario, setComentario] = useState('')
+  const [comentarioTouched, setComentarioTouched] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -51,6 +53,12 @@ export default function Questionario() {
     const referralSource = sessionStorage.getItem('referralSource');
     const duration = Date.now() - startTime
 
+    // Validação do campo obrigatório para detratores
+    if (npsScore <= 6 && comentario.trim() === '') {
+      setComentarioTouched(true);
+      return;
+    }
+
     await supabase.from('respostas').insert({
       nps_score: npsScore,
       q1: answers[0],
@@ -62,16 +70,18 @@ export default function Questionario() {
       telefone: telefone || null,
       origem: referralSource || null,
       duration,
+      comentario: comentario.trim() || null,
     })
 
+    sessionStorage.setItem('comentario', comentario.trim());
     router.push('/obrigado')
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex flex-col items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 max-w-sm sm:max-w-lg w-full">
-        <div className="mb-6 text-center">
-          <Image src="/logo.png" alt="Rede Soma Santa Cruz" width={96} height={96} className="mx-auto" />
+        <div className="mb-0 text-center">
+          <Image src="/logo.png" alt="Rede Soma Santa Cruz" width={192} height={192} className="mx-auto" style={{marginBottom: '0'}} />
         </div>
         <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-8">Questionário de Satisfação</h1>
         {questions.map((q, i) => (
@@ -123,8 +133,40 @@ export default function Questionario() {
             placeholder="Telefone (opcional)"
             value={telefone}
             onChange={(e) => setTelefone(formatPhone(e.target.value))}
-            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base mb-3"
           />
+          {/* Campo de feedback condicional */}
+          {(() => {
+            const npsScore = parseInt(sessionStorage.getItem('npsScore') || '0');
+            if (npsScore <= 6) {
+              return (
+                <div className="mb-2">
+                  <label className="block text-sm font-medium text-red-700 mb-1">Sinto muito que sua experiência não foi ideal. O que podemos fazer para melhorar? <span className="text-red-500">*</span></label>
+                  <textarea
+                    className={`w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-sm sm:text-base ${comentarioTouched && comentario.trim() === '' ? 'border-red-500' : 'border-gray-300'}`}
+                    value={comentario}
+                    onChange={e => { setComentario(e.target.value); setComentarioTouched(false); }}
+                    onBlur={() => setComentarioTouched(true)}
+                    required
+                  />
+                  {comentarioTouched && comentario.trim() === '' && (
+                    <span className="text-xs text-red-500">Este campo é obrigatório para notas de 0 a 6.</span>
+                  )}
+                </div>
+              );
+            } else {
+              return (
+                <div className="mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Gostaria de deixar algum comentário adicional? (Opcional)</label>
+                  <textarea
+                    className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                    value={comentario}
+                    onChange={e => setComentario(e.target.value)}
+                  />
+                </div>
+              );
+            }
+          })()}
         </div>
         <button
           onClick={handleSubmit}

@@ -25,17 +25,18 @@ interface ChartDataNota {
 }
 
 interface Resposta {
-  created_at: string;
-  nps_score: number;
-  q1: number;
-  q2: number;
-  q3: number;
-  q4: number;
-  q5: number;
-  nome?: string;
-  telefone?: string;
-  origem?: string;
-  duration: number;
+    created_at: string;
+    nps_score: number;
+    q1: number;
+    q2: number;
+    q3: number;
+    q4: number;
+    q5: number;
+    nome?: string;
+    telefone?: string;
+    origem?: string;
+    duration: number;
+    comentario?: string;
 }
 interface AgradecimentoCliques {
     link_type: string;
@@ -93,20 +94,21 @@ async function getData(): Promise<DashboardData> {
 
   const chartDataDia = Object.entries(respostasPorDia).map(([date, count]) => ({ date, count: count as number }))
 
-  const distribuicaoNotas = respostasList.reduce((acc, r) => {
-    if (r.nps_score <= 3) acc['0-3'] = (acc['0-3'] || 0) + 1
-    else if (r.nps_score <= 7) acc['4-7'] = (acc['4-7'] || 0) + 1
-    else acc['8-10'] = (acc['8-10'] || 0) + 1
-    return acc
-  }, {} as Record<string, number>);
+    // NPS padrão global: 0-6 (Detratores), 7-8 (Passivos), 9-10 (Promotores)
+    const distribuicaoNotas = respostasList.reduce((acc, r) => {
+        if (r.nps_score <= 6) acc['0-6'] = (acc['0-6'] || 0) + 1;
+        else if (r.nps_score <= 8) acc['7-8'] = (acc['7-8'] || 0) + 1;
+        else acc['9-10'] = (acc['9-10'] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
 
-  const chartDataNotas = Object.entries(distribuicaoNotas).map(([range, count]) => {
-    let fill = '#EF4444' // red for 0-3
-    if (range === '4-7') fill = '#F59E0B' // yellow
-    else if (range === '8-10') fill = '#10B981' // green
-    const percentage = totalRespostas > 0 ? ((count as number) / totalRespostas) * 100 : 0
-    return { nota: range, count: count as number, fill, percentage }
-  })
+    const chartDataNotas = Object.entries(distribuicaoNotas).map(([range, count]) => {
+        let fill = '#EF4444'; // red for 0-6 (Detratores)
+        if (range === '7-8') fill = '#F59E0B'; // yellow for 7-8 (Passivos)
+        else if (range === '9-10') fill = '#10B981'; // green for 9-10 (Promotores)
+        const percentage = totalRespostas > 0 ? ((count as number) / totalRespostas) * 100 : 0;
+        return { nota: range, count: count as number, fill, percentage };
+    });
   
     const agradecimentoCliquesCounts = ((agradecimentoCliquesData || []) as any[]).reduce((acc, r) => {
         acc[r.link_type] = (acc[r.link_type] || 0) + 1;
@@ -397,6 +399,7 @@ export default function Admin() {
                 <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">NPS</th>
                 <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Q1-Q5</th>
                 <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Nome</th>
+                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Comentário</th>
                 <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Telefone</th>
                 <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Origem</th>
                 <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Duração (s)</th>
@@ -409,6 +412,7 @@ export default function Admin() {
                   <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.nps_score}</td>
                   <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{[r.q1,r.q2,r.q3,r.q4,r.q5].join(', ')}</td>
                   <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.nome || '-'}</td>
+                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.comentario ? r.comentario : '-'}</td>
                   <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.telefone || '-'}</td>
                   <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.origem || '-'}</td>
                   <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{(r.duration / 1000).toFixed(1)}</td>

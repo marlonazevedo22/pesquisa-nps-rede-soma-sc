@@ -5,13 +5,13 @@ Aplicação web para coleta de feedback de clientes (NPS) desenvolvida com Next.
 ## 🚀 Funcionalidades
 
 - **Home**: Interface limpa para coleta de nota NPS (0-10).
-- **Questionário**: Perguntas detalhadas com avaliação por emojis e campos opcionais.
-- **Agradecimento**: Página final com redirecionamento para Google Reviews e Instagram.
+- **Questionário**: Perguntas detalhadas com avaliação por emojis. Campo de comentário obrigatório para notas 0-6 (detratores) e opcional para demais.
+- **Agradecimento**: Página final com redirecionamento para Google Reviews e Instagram. Para notas 0-6, foco total em resolução: mensagem especial e botão para WhatsApp do gerente (sem link do Google).
 - **Dashboard Administrativo**:
   - Visualização de métricas em tempo real (NPS, total de respostas, conversão).
   - Gráficos de desempenho diário e distribuição de notas.
   - Gestão de métricas manuais (WhatsApp).
-  - Tabela completa de respostas.
+   - Tabela completa de respostas, incluindo coluna de comentários/feedback dos clientes.
    - Protegido por senha (usuário: admin, senha definida em ADMIN_PASSWORD).
 
 ## 🛠️ Tecnologias
@@ -31,6 +31,8 @@ Aplicação web para coleta de feedback de clientes (NPS) desenvolvida com Next.
 
 2. **Configuração do Supabase**:
    Crie um projeto no Supabase e execute o script contido no arquivo `schema.sql` (na raiz do projeto) dentro do SQL Editor do Supabase para criar todas as tabelas automaticamente.
+   
+   > **Importante:** O campo `comentario` (feedback) está presente na tabela `respostas` e armazena o comentário obrigatório de clientes detratores (nota 0-6) e opcional dos demais.
 
 3. **Variáveis de Ambiente**:
    Crie um arquivo `.env.local` na raiz do projeto. Este arquivo **não** deve ser commitado no Git. Adicione as seguintes chaves:
