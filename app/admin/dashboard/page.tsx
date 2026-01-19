@@ -222,77 +222,43 @@ export default function Admin() {
 
   const totalClicks = data.agradecimentoCliques.reduce((acc, curr) => acc + curr.count, 0);
 
+  // Unificar acessos únicos e avaliações iniciadas
+  const totalEngajamentos = data.totalAcessos + data.avaliacoesIniciadas;
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
       <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold text-white mb-6">Dashboard de Marketing</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
-            <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-gray-300">Total Acessos Únicos</h2>
-                <FiHelpCircle data-tooltip-id="total-acessos-tooltip" className="text-white cursor-help" />
-            </div>
-            <p className="text-2xl font-bold text-blue-400 mt-1">{data.totalAcessos}</p>
-            <ReactTooltip id="total-acessos-tooltip" place="top" className="bg-gray-800 text-white border border-gray-600">
-                Número total de visitantes únicos que acessaram a página inicial da pesquisa.
-            </ReactTooltip>
-        </div>
-        <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
-            <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-gray-300">Avaliações Iniciadas</h2>
-                <FiHelpCircle data-tooltip-id="avaliacoes-iniciadas-tooltip" className="text-white cursor-help" />
-            </div>
-            <p className="text-2xl font-bold text-yellow-400 mt-1">{data.avaliacoesIniciadas}</p>
-            <ReactTooltip id="avaliacoes-iniciadas-tooltip" place="top" className="bg-gray-800 text-white border border-gray-600">
-                Número total de usuários que iniciaram o questionário.
-            </ReactTooltip>
-        </div>
-        <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
-            <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-gray-300">Avaliações Finalizadas</h2>
-                <FiHelpCircle data-tooltip-id="avaliacoes-finalizadas-tooltip" className="text-white cursor-help" />
-            </div>
-            <p className="text-2xl font-bold text-green-400 mt-1">{data.totalRespostas}</p>
-            <ReactTooltip id="avaliacoes-finalizadas-tooltip" place="top" className="bg-gray-800 text-white border border-gray-600">
-                Número total de usuários que finalizaram o questionário (preencheram nome e telefone).
-            </ReactTooltip>
-        </div>
-        <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
-            <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-gray-300">NPS Geral</h2>
-                <FiHelpCircle data-tooltip-id="nps-geral-tooltip" className="text-white cursor-help" />
-            </div>
-            <p className="text-2xl font-bold text-purple-400 mt-1">{data.npsGeral.toFixed(1)}</p>
-            <ReactTooltip id="nps-geral-tooltip" place="top" className="bg-gray-800 text-white border border-gray-600">
-                A média geral do Net Promoter Score (NPS) de todas as respostas.
-            </ReactTooltip>
-        </div>
-      </div>
+        <h1 className="text-2xl font-bold text-white mb-6">Dashboard de Marketing</h1>
       
-      <div className="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700 mb-6">
-        <h2 className="text-lg font-semibold text-gray-300 mb-4">Funil de Engajamento</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-gray-700/50 p-4 rounded-lg">
-                <p className="text-sm text-gray-400">Iniciaram o Questionário</p>
-                <p className="text-2xl font-bold text-white">{data.avaliacoesIniciadas}</p>
+            <div className="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700 mb-6">
+                <h2 className="text-lg font-semibold text-gray-300 mb-4">Funil de Engajamento</h2>
+                <div className="bg-gray-700/50 p-6 rounded-lg flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                    <div>
+                        <p className="text-sm text-gray-400">Iniciaram o Questionário</p>
+                        <p className="text-2xl font-bold text-white">{data.avaliacoesIniciadas}</p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-400">Completaram</p>
+                        <p className="text-2xl font-bold text-green-400">{data.totalRespostas}</p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-400">Clicaram em Redes</p>
+                        <p className="text-2xl font-bold text-blue-400">{totalClicks}</p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-400">Conversão</p>
+                        <p className="text-2xl font-bold text-yellow-400">{data.avaliacoesIniciadas > 0 ? ((data.totalRespostas / data.avaliacoesIniciadas) * 100).toFixed(1) : 0}%</p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-400">Engajamento</p>
+                        <p className="text-2xl font-bold text-purple-400">{data.totalRespostas > 0 ? ((totalClicks / data.totalRespostas) * 100).toFixed(1) : 0}%</p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-400">NPS Geral</p>
+                        <p className="text-2xl font-bold text-pink-400">{data.npsGeral.toFixed(1)}</p>
+                    </div>
+                </div>
             </div>
-            <div className="bg-gray-700/50 p-4 rounded-lg">
-                <p className="text-sm text-gray-400">Completaram</p>
-                <p className="text-2xl font-bold text-green-400">{data.totalRespostas}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                    {data.avaliacoesIniciadas > 0 ? ((data.totalRespostas / data.avaliacoesIniciadas) * 100).toFixed(1) : 0}% de conversão
-                </p>
-            </div>
-            <div className="bg-gray-700/50 p-4 rounded-lg">
-                <p className="text-sm text-gray-400">Clicaram em Redes</p>
-                <p className="text-2xl font-bold text-blue-400">{totalClicks}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                    {data.totalRespostas > 0 ? ((totalClicks / data.totalRespostas) * 100).toFixed(1) : 0}% de engajamento
-                </p>
-            </div>
-        </div>
-      </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
