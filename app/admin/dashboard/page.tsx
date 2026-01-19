@@ -389,39 +389,57 @@ export default function Admin() {
         </div>
 
 
-      <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
-        <h2 className="text-lg font-semibold text-gray-300 mb-2">Tabela de Respostas</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full table-auto border-collapse">
-            <thead>
-              <tr className="bg-gray-700">
-                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Timestamp</th>
-                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">NPS</th>
-                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Q1-Q5</th>
-                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Nome</th>
-                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Comentário</th>
-                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Telefone</th>
-                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Origem</th>
-                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Duração (s)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.respostas.map((r: Resposta, i: number) => (
-                <tr key={i} className="hover:bg-gray-700">
-                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{new Date(r.created_at).toLocaleString()}</td>
-                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.nps_score}</td>
-                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{[r.q1,r.q2,r.q3,r.q4,r.q5].join(', ')}</td>
-                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.nome || '-'}</td>
-                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.comentario ? r.comentario : '-'}</td>
-                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.telefone || '-'}</td>
-                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.origem || '-'}</td>
-                  <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{(r.duration / 1000).toFixed(1)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            {/* Seção de Feedbacks/Dicas dos Usuários */}
+            <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700 mb-6">
+                <h2 className="text-lg font-semibold text-gray-300 mb-2">Feedbacks/Dicas dos Usuários</h2>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {data.respostas.filter(r => r.comentario && r.comentario.trim() !== '').length === 0 ? (
+                        <div className="text-gray-400">Nenhum feedback ou dica enviado ainda.</div>
+                    ) : (
+                        data.respostas.filter(r => r.comentario && r.comentario.trim() !== '').map((r, i) => (
+                            <div key={i} className="bg-gray-700 rounded p-3 border border-gray-600">
+                                <div className="text-gray-200 text-sm">{r.comentario}</div>
+                                <div className="text-xs text-gray-400 mt-1">{r.nome ? `Por: ${r.nome}` : 'Anônimo'} &bull; {new Date(r.created_at).toLocaleString()}</div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+
+            {/* Tabela de Respostas */}
+            <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-300 mb-2">Tabela de Respostas</h2>
+                <div className="overflow-x-auto">
+                    <table className="w-full table-auto border-collapse">
+                        <thead>
+                            <tr className="bg-gray-700">
+                                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Timestamp</th>
+                                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">NPS</th>
+                                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Q1-Q5</th>
+                                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Nome</th>
+                                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Comentário</th>
+                                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Telefone</th>
+                                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Origem</th>
+                                <th className="border border-gray-600 px-2 py-1 text-left text-xs font-medium text-gray-300">Duração (s)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.respostas.map((r: Resposta, i: number) => (
+                                <tr key={i} className="hover:bg-gray-700">
+                                    <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{new Date(r.created_at).toLocaleString()}</td>
+                                    <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.nps_score}</td>
+                                    <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{[r.q1,r.q2,r.q3,r.q4,r.q5].join(', ')}</td>
+                                    <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.nome || '-'}</td>
+                                    <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.comentario ? r.comentario : '-'}</td>
+                                    <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.telefone || '-'}</td>
+                                    <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{r.origem || '-'}</td>
+                                    <td className="border border-gray-600 px-2 py-1 text-xs text-gray-300">{(r.duration / 1000).toFixed(1)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
     </div>
     </div>
   )
