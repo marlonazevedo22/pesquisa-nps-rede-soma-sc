@@ -24,9 +24,11 @@ export default function Questionario() {
   const router = useRouter()
 
   useEffect(() => {
-    const npsScore = sessionStorage.getItem('npsScore')
-    if (!npsScore) {
-      router.push('/')
+    if (typeof window !== 'undefined') {
+      const npsScore = sessionStorage.getItem('npsScore')
+      if (!npsScore) {
+        router.push('/')
+      }
     }
   }, [router])
 
@@ -48,10 +50,15 @@ export default function Questionario() {
   }
 
   const handleSubmit = async () => {
-    const npsScore = parseInt(sessionStorage.getItem('npsScore') || '0')
-    const startTime = parseInt(sessionStorage.getItem('startTime') || '0')
-    const referralSource = sessionStorage.getItem('referralSource');
-    const duration = Date.now() - startTime
+    let npsScore = 0;
+    let startTime = 0;
+    let referralSource = null;
+    if (typeof window !== 'undefined') {
+      npsScore = parseInt(sessionStorage.getItem('npsScore') || '0');
+      startTime = parseInt(sessionStorage.getItem('startTime') || '0');
+      referralSource = sessionStorage.getItem('referralSource');
+    }
+    const duration = Date.now() - startTime;
 
     // Validação do campo obrigatório para detratores
     if (npsScore <= 6 && comentario.trim() === '') {
@@ -73,7 +80,9 @@ export default function Questionario() {
       comentario: comentario.trim() || null,
     })
 
-    sessionStorage.setItem('comentario', comentario.trim());
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('comentario', comentario.trim());
+    }
     router.push('/obrigado')
   }
 
@@ -137,7 +146,10 @@ export default function Questionario() {
           />
           {/* Campo de feedback condicional */}
           {(() => {
-            const npsScore = parseInt(sessionStorage.getItem('npsScore') || '0');
+            let npsScore = 0;
+            if (typeof window !== 'undefined') {
+              npsScore = parseInt(sessionStorage.getItem('npsScore') || '0');
+            }
             if (npsScore <= 6) {
               return (
                 <div className="mb-2">
